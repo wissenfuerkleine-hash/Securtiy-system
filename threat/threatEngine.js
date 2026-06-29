@@ -49,13 +49,11 @@ class ThreatEngine {
     const events = this.userEvents.get(userId);
     events.push({ action: actionType, points, timestamp: now });
 
-    // Remove events outside sliding window
     const validEvents = events.filter(e => now - e.timestamp <= this.slidingWindow);
     this.userEvents.set(userId, validEvents);
 
     const totalScore = validEvents.reduce((sum, e) => sum + e.points, 0);
 
-    // Update database
     await pool.query(
       `INSERT INTO threat_scores (user_id, guild_id, score, role_tier, events, last_updated)
        VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP)

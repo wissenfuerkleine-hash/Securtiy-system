@@ -26,15 +26,10 @@ async function initDatabase() {
         id SERIAL PRIMARY KEY,
         incident_id VARCHAR(50) UNIQUE,
         status VARCHAR(20) DEFAULT 'ACTIVE',
-        mode VARCHAR(20) DEFAULT 'AUTO',
         level INTEGER DEFAULT 1,
         reason TEXT,
-        threat_score INTEGER DEFAULT 0,
-        role_tier_impact TEXT,
         initiator VARCHAR(50),
         timeline JSONB,
-        system_status JSONB,
-        recovery_status JSONB,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )

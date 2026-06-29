@@ -24,31 +24,11 @@ class AutoMod {
     if (!message.member) return null;
 
     let threatType = null;
-    let threatPoints = 0;
 
-    // Check for spam
-    if (this.isSpam(message)) {
-      threatType = 'spam';
-      threatPoints = threatEngine.actionPoints.spam;
-    }
-
-    // Check for scam links
-    if (this.isScam(message.content)) {
-      threatType = 'scam_link';
-      threatPoints = threatEngine.actionPoints.scam_link;
-    }
-
-    // Check for mass mentions
-    if (message.mentions.users.size > 5) {
-      threatType = 'mass_mention';
-      threatPoints = threatEngine.actionPoints.mass_mention;
-    }
-
-    // Check for toxicity
-    if (this.isToxic(message.content)) {
-      threatType = 'toxicity';
-      threatPoints = threatEngine.actionPoints.toxicity;
-    }
+    if (this.isSpam(message)) threatType = 'spam';
+    if (this.isScam(message.content)) threatType = 'scam_link';
+    if (message.mentions.users.size > 5) threatType = 'mass_mention';
+    if (this.isToxic(message.content)) threatType = 'toxicity';
 
     if (threatType) {
       const result = await threatEngine.addThreat(
@@ -58,9 +38,7 @@ class AutoMod {
         message.member
       );
 
-      // Take action based on automod level
       await this.takeAction(message, threatType, result);
-
       return result;
     }
 
@@ -68,7 +46,6 @@ class AutoMod {
   }
 
   isSpam(message) {
-    // Simple spam detection: same message sent multiple times
     const key = `${message.author.id}-${message.channel.id}`;
     if (!this.messageHistory) this.messageHistory = new Map();
     
@@ -99,8 +76,6 @@ class AutoMod {
       await message.member.timeout(10 * 60 * 1000, 'AutoMod: High threat detected');
     } else if (threshold === 'WARNING' || this.automodLevel === 'HIGH') {
       await message.delete();
-    } else if (threshold === 'FAIL_ALERT') {
-      // Just log, no action
     }
   }
 }

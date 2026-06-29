@@ -1,19 +1,16 @@
 {
-  "name": "discord-security-system",
+  "name": "discord-security-final",
   "version": "1.0.0",
-  "description": "High-security Discord Incident Response System with AutoMod, Lockdown, and Web Dashboard",
+  "description": "Discord Security System with AutoMod, Lockdown, and Railway Console Unlock",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js"
+    "register-commands": "node register-commands.js"
   },
   "dependencies": {
     "discord.js": "^14.14.1",
-    "express": "^4.18.2",
     "dotenv": "^16.3.1",
-    "pg": "^8.11.3",
-    "express-session": "^1.17.3",
-    "bcrypt": "^5.1.1"
+    "pg": "^8.11.3"
   },
   "engines": {
     "node": ">=18.0.0"

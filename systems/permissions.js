@@ -11,13 +11,11 @@ class PermissionManager {
     const owner = process.env.OWNER_ID;
     const securityRole = process.env.SECURITY_ROLE_ID;
 
-    // Store current permissions for all roles
     guild.roles.cache.forEach(role => {
-      if (role.id === guild.id) return; // Skip @everyone
+      if (role.id === guild.id) return;
       this.frozenPermissions.set(role.id, role.permissions.bitfield);
     });
 
-    // Remove dangerous permissions from all roles except owner and security
     const dangerousPermissions = [
       PermissionFlagsBits.ManageChannels,
       PermissionFlagsBits.ManageRoles,
@@ -32,7 +30,6 @@ class PermissionManager {
     guild.roles.cache.forEach(async role => {
       if (role.id === guild.id) return;
       
-      // Check if role has owner or security role
       const members = role.members;
       const hasOwner = members.some(m => m.id === owner);
       const hasSecurity = members.some(m => m.roles.cache.has(securityRole));
@@ -49,7 +46,6 @@ class PermissionManager {
 
     this.isFrozen = false;
 
-    // Restore permissions
     for (const [roleId, permissions] of this.frozenPermissions) {
       const role = await guild.roles.fetch(roleId).catch(() => null);
       if (role) {

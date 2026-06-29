@@ -9,7 +9,6 @@ class SnapshotManager {
       invites: []
     };
 
-    // Snapshot channels
     guild.channels.cache.forEach(channel => {
       snapshot.channels.push({
         id: channel.id,
@@ -24,9 +23,8 @@ class SnapshotManager {
       });
     });
 
-    // Snapshot roles
     guild.roles.cache.forEach(role => {
-      if (role.id !== role.guild.id) { // Skip @everyone
+      if (role.id !== role.guild.id) {
         snapshot.roles.push({
           id: role.id,
           name: role.name,
@@ -38,7 +36,6 @@ class SnapshotManager {
       }
     });
 
-    // Snapshot invites
     const invites = await guild.invites.fetch();
     invites.forEach(invite => {
       snapshot.invites.push({
@@ -50,7 +47,6 @@ class SnapshotManager {
       });
     });
 
-    // Save to database
     await pool.query(
       `INSERT INTO snapshots (incident_id, channels, roles, permissions, invites)
        VALUES ($1, $2, $3, $4, $5)`,

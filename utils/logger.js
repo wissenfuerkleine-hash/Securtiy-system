@@ -10,13 +10,12 @@ class SecurityLogger {
   async init() {
     const guild = await this.client.guilds.fetch(process.env.GUILD_ID);
     
-    // Try to find existing log channel
     this.logChannel = guild.channels.cache.find(c => c.name === 'security-logs' && c.isTextBased());
     
     if (!this.logChannel) {
       this.logChannel = await guild.channels.create({
         name: 'security-logs',
-        type: 0, // GUILD_TEXT
+        type: 0,
         permissionOverwrites: [
           {
             id: guild.roles.everyone,
@@ -34,14 +33,12 @@ class SecurityLogger {
   async log(eventType, userId, details) {
     const timestamp = new Date().toISOString();
 
-    // Log to database
     await pool.query(
       `INSERT INTO security_logs (event_type, user_id, details, created_at)
        VALUES ($1, $2, $3, $4)`,
       [eventType, userId, JSON.stringify(details), timestamp]
     );
 
-    // Log to Discord channel
     if (this.logChannel) {
       const embed = new EmbedBuilder()
         .setTitle(`🔒 Security Log: ${eventType}`)
@@ -76,14 +73,6 @@ class SecurityLogger {
     await this.log('FAIL_ALERT', userId, {
       score,
       tier,
-      timestamp: new Date().toISOString()
-    });
-  }
-
-  async logThreatScore(userId, score, action) {
-    await this.log('THREAT_SCORE_CHANGE', userId, {
-      score,
-      action,
       timestamp: new Date().toISOString()
     });
   }

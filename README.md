@@ -1,6 +1,6 @@
 # Discord Security System
 
-Ein hochsicheres Discord Incident Response System mit AutoMod, Lockdown, und Web Dashboard für Railway Deployment.
+Ein hochsicheres Discord Incident Response System mit AutoMod, Lockdown, und Railway Console Unlock.
 
 ## Features
 
@@ -11,9 +11,8 @@ Ein hochsicheres Discord Incident Response System mit AutoMod, Lockdown, und Web
 - **Permission Freeze** - Temporäre Entziehung gefährlicher Berechtigungen
 - **Incident Panel** - Automatisch erstellte Discord-Channels für Vorfälle
 - **Snapshot & Restore** - Server-Status sichern und wiederherstellen
-- **Web Dashboard** - Passwortgeschütztes Dashboard für Monitoring und Unlock
-- **Panic Mode** - Sofortiger Level 3 Lockdown aus dem Dashboard
-- **Fail-Alert System** - Soft Detection ohne Lockdown
+- **Discord Slash Commands** - Lockdown Start über Discord
+- **Railway Console Unlock** - Lockdown Stop über Railway Environment Variable
 
 ## Railway Deployment
 
@@ -55,46 +54,13 @@ TIER_1_ROLE_ID=1514285810889916426
 TIER_2_ROLE_ID=1514302949600399420
 TIER_3_ROLE_ID=1514289625131258048
 DATABASE_URL=(aus PostgreSQL Service kopieren)
-DASHBOARD_PASSWORD=your_secure_password
-SESSION_SECRET=random_secret_string
-PORT=3000
+UNLOCK_SERVER=false
 NODE_ENV=production
 ```
 
 ### 5. Deployen
 
 Railway wird automatisch deployen. Überwache die Logs unter "Deployments".
-
-### 6. Dashboard Zugriff
-
-Nach erfolgreichem Deploy:
-1. Railway zeigt die Domain (z.B. `your-app.railway.app`)
-2. Öffne `https://your-app.railway.app/login`
-3. Logge dich mit deinem `DASHBOARD_PASSWORD` ein
-
-## Lokale Entwicklung
-
-### 1. Dependencies installieren
-
-```bash
-npm install
-```
-
-### 2. .env Datei erstellen
-
-Kopiere `.env.example` zu `.env` und fülle die Werte aus.
-
-### 3. Lokale PostgreSQL (optional)
-
-Für lokale Entwicklung ohne Railway:
-- Installiere PostgreSQL lokal
-- Oder setze `DATABASE_URL` leer für SQLite-Fallback
-
-### 4. Starten
-
-```bash
-npm start
-```
 
 ## System Übersicht
 
@@ -158,16 +124,42 @@ Während Lockdown werden folgende Berechtigungen temporär entzogen:
 
 Ausgenommen: Owner und Security Team
 
-## WICHTIG
+## Discord Slash Commands
 
-- **Unlock NUR über Dashboard** - Der Discord Bot hat KEINEN Unlock Command
-- Dashboard ist passwortgeschützt
-- Nur Security Team und Owner haben Zugriff auf Dashboard
-- Alle Aktionen werden in `security-logs` Channel protokolliert
+### /lockdown
+Initiiert einen Lockdown (nur Security Team und Owner)
+
+**Optionen:**
+- `level` (1-3) - Lockdown Stufe
+- `reason` - Grund für den Lockdown
+
+**Beispiel:**
+```
+/lockdown level:3 reason:Raid detected
+```
+
+### /status
+Zeigt den aktuellen Lockdown Status an
+
+## Unlock Mechanismus
+
+**WICHTIG: Unlock NUR über Railway Console!**
+
+### So entsperrst du den Server:
+
+1. Gehe zu deinem Railway Projekt
+2. Klicke auf deinen Bot Service
+3. Gehe zu "Settings" → "Variables"
+4. Ändere `UNLOCK_SERVER` von `false` zu `true`
+5. Klicke "Save"
+6. Railway wird automatisch neu deployen
+7. Der Bot wird das Signal erkennen und den Server entsperren
+8. Setze `UNLOCK_SERVER` danach wieder auf `false`
 
 ## Sicherheitshinweise
 
-- Ändere das `DASHBOARD_PASSWORD` vor dem Deploy
-- Verwende ein starkes `SESSION_SECRET`
-- Teile die Railway Domain nicht öffentlich
+- Ändere das `DISCORD_TOKEN` vor dem Deploy
 - Aktiviere 2FA auf deinem Railway Account
+- Nur Security Team und Owner können Lockdown starten
+- Unlock nur über Railway Console (nicht über Discord)
+- Alle Aktionen werden in `security-logs` Channel protokolliert

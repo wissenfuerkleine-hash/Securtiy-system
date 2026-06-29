@@ -11,7 +11,7 @@ class LockdownSystem {
     this.lockdownLevel = 0;
   }
 
-  async initiateLockdown(level, reason, initiator = 'AUTO', mode = 'AUTO') {
+  async initiateLockdown(level, reason, initiator = 'AUTO') {
     if (this.activeLockdown) {
       console.log('Lockdown already active');
       return null;
@@ -20,7 +20,6 @@ class LockdownSystem {
     const guild = await this.client.guilds.fetch(process.env.GUILD_ID);
     const incidentId = `INC-${Date.now()}`;
 
-    // Create snapshot before lockdown
     await snapshot.createSnapshot(guild, incidentId);
 
     this.activeLockdown = {
@@ -28,23 +27,18 @@ class LockdownSystem {
       level,
       reason,
       initiator,
-      mode,
       startTime: Date.now()
     };
 
     this.lockdownLevel = level;
 
-    // Apply lockdown measures based on level
     await this.applyLockdownLevel(guild, level);
+    await incidentPanel.create(guild, incidentId, level, reason, initiator);
 
-    // Create incident panel
-    await incidentPanel.create(guild, incidentId, level, reason, initiator, mode);
-
-    // Log to database
     await pool.query(
-      `INSERT INTO incidents (incident_id, status, mode, level, reason, initiator, timeline, system_status)
-       VALUES ($1, 'ACTIVE', $2, $3, $4, $5, $6, $7)`,
-      [incidentId, mode, level, reason, initiator, JSON.stringify([]), JSON.stringify({ lockdown: true, level })]
+      `INSERT INTO incidents (incident_id, status, level, reason, initiator, timeline)
+       VALUES ($1, 'ACTIVE', $2, $3, $4, $5)`,
+      [incidentId, level, reason, initiator, JSON.stringify([])]
     );
 
     return incidentId;
@@ -68,7 +62,6 @@ class LockdownSystem {
   }
 
   async applyLevel1(guild) {
-    // Close all text channels except mod/ticket
     const channels = guild.channels.cache.filter(c => c.isTextBased());
     const allowedChannels = ['mod', 'ticket', 'admin', 'staff'];
 
@@ -83,7 +76,6 @@ class LockdownSystem {
   }
 
   async applyLevel2(guild) {
-    // Close voice channels and block screen share
     const voiceChannels = guild.channels.cache.filter(c => c.isVoiceBased());
 
     for (const channel of voiceChannels) {
@@ -96,17 +88,39 @@ class LockdownSystem {
   }
 
   async applyLevel3(guild) {
-    // Delete and block invites
     const invites = await guild.invites.fetch();
     for (const invite of invites.values()) {
       await invite.delete('Lockdown Level 3');
     }
 
-    // Enable permission freeze
     await permissions.freezePermissions(guild);
   }
 
-  async getLockdownStatus() {
+  async unlock() {
+    if (!this.activeLockdown) return false;
+
+    const guild = await this.client.guilds.fetch(process.env.GUILD_ID);
+    const { restore } = require('./restore');
+    
+    await restore(guild, this.activeLockdown.id);
+    await incidentPanel.close(this.activeLockdown.id);
+
+    await pool.query('UPDATE incidents SET status = $1 WHERE incident_id = $2', ['RESOLVED', this.activeLockdown.id]);
+
+    this.activeLockdown = null;
+    this.lockdownLevel = 0;
+
+    return true;
+  }
+
+  async checkUnlockSignal() {
+    if (process.env.UNLOCK_SERVER === 'true' && this.activeLockdown) {
+      console.log('Unlock signal detected, unlocking server...');
+      await this.unlock();
+    }
+  }
+
+  getLockdownStatus() {
     return this.activeLockdown;
   }
 
